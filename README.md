@@ -1,6 +1,6 @@
 # ChopeTheNews
 
-Outil de veille d'actualités en ligne de commande. Il récupère toutes les news des **X derniers jours** sur une liste de sites et sur des recherches Google News, les classe **par thème**, supprime les doublons et génère un **rapport Markdown** lisible.
+Outil de veille d'actualités. Il récupère toutes les news des **X derniers jours** sur une liste de sites et sur des recherches Google News / Bing News, les classe **par thème**, supprime les doublons et génère un **dashboard HTML** (images, liens, filtres, recherche) qui s'ouvre dans ton navigateur, ainsi qu'un rapport Markdown.
 
 Aucun serveur, aucun compte, aucune clé API : tout tourne en local depuis un simple `git clone`.
 
@@ -12,7 +12,8 @@ Aucun serveur, aucun compte, aucune clé API : tout tourne en local depuis un si
 - [Installation](#installation)
 - [Configuration](#configuration)
 - [Utilisation](#utilisation)
-- [Le rapport](#le-rapport)
+- [Le dashboard](#le-dashboard)
+- [Le rapport Markdown](#le-rapport-markdown)
 - [Astuces](#astuces)
 - [Structure du projet](#structure-du-projet)
 - [Limites connues](#limites-connues)
@@ -24,15 +25,16 @@ Aucun serveur, aucun compte, aucune clé API : tout tourne en local depuis un si
 ```
 config.yaml
    │
-   ├─ sites (flux RSS) ───────┐
-   │                          ├─► collecte ─► filtre par date ─► base SQLite ─► rapport Markdown
-   └─ recherches (Google News)┘                                 (dédoublonnage)   rapports/veille_AAAA-MM-JJ.md
+   ├─ sites (flux RSS) ──────────────┐                                                ┌─► dashboard HTML
+   │                                 ├─► collecte ─► filtre par date ─► base SQLite ─┤
+   └─ recherches (Google + Bing News)┘    + images                   (dédoublonnage)  └─► rapport Markdown
 ```
 
-1. **Collecte** : pour chaque thème, l'app lit les flux RSS des sites listés et lance les recherches sur Google News (via son flux RSS public, `news.google.com/rss/search`). Tout est récupéré en parallèle.
-2. **Filtre** : seuls les articles publiés pendant la période demandée (`periode_jours`) sont gardés.
-3. **Stockage** : les articles sont enregistrés dans une base SQLite locale (`data/veille.db`). Un article déjà vu (même URL) n'est pas ajouté une deuxième fois, donc tu peux lancer l'outil plusieurs fois par jour sans créer de doublons.
-4. **Rapport** : un fichier Markdown est généré avec tous les articles de la période, groupés par thème et triés du plus récent au plus ancien.
+1. **Collecte** : pour chaque thème, l'app lit les flux RSS des sites listés et lance les recherches sur Google News et Bing News (via leurs flux RSS publics). Tout est récupéré en parallèle.
+2. **Images** : l'image de chaque article est prise dans le flux (balises média, miniature Bing) ou, à défaut, dans la balise `og:image` de la page de l'article.
+3. **Filtre** : seuls les articles publiés pendant la période demandée (`periode_jours`) sont gardés.
+4. **Stockage** : les articles sont enregistrés dans une base SQLite locale (`data/veille.db`). Un article déjà vu (même URL) n'est pas ajouté une deuxième fois, donc tu peux lancer l'outil plusieurs fois par jour sans créer de doublons. Un même titre trouvé par plusieurs moteurs n'apparaît qu'une fois, en gardant la version avec image.
+5. **Rapports** : un dashboard HTML et un fichier Markdown sont générés avec tous les articles de la période.
 
 ---
 
@@ -127,7 +129,10 @@ themes:
 | `periode_jours` | non | `7` | Nombre de jours couverts par la veille |
 | `google_news.langue` | non | `fr` | Langue des résultats Google News |
 | `google_news.pays` | non | `FR` | Pays des résultats Google News |
+| `moteurs` | non | `[google_news, bing_news]` | Moteurs utilisés pour les `recherches` |
 | `extraire_contenu` | non | `false` | Récupère le texte complet des articles |
+| `recuperer_images` | non | `true` | Cherche l'image `og:image` des articles qui n'en ont pas dans le flux |
+| `ouvrir_navigateur` | non | `true` | Ouvre le dashboard à la fin de l'exécution |
 | `dossier_rapports` | non | `rapports` | Dossier de sortie des rapports |
 | `base_de_donnees` | non | `data/veille.db` | Fichier de la base SQLite |
 | `themes` | **oui** | | Dictionnaire `nom_du_theme: { sites, recherches }` |
@@ -150,6 +155,8 @@ Options :
 |---|---|---|
 | `-j N`, `--jours N` | Remplace `periode_jours` pour cette exécution | `uv run veille -j 1` |
 | `-c FICHIER`, `--config FICHIER` | Utilise un autre fichier de config | `uv run veille -c config_boulot.yaml` |
+| `--sans-collecte` | Régénère les rapports depuis la base, sans rien télécharger | `uv run veille --sans-collecte` |
+| `--no-open` | N'ouvre pas le dashboard dans le navigateur | `uv run veille --no-open` |
 | `-h` | Affiche l'aide | `uv run veille -h` |
 
 Exemple de sortie :
@@ -168,9 +175,21 @@ Rapport : rapports/veille_2026-10-25.md
 
 ---
 
-## Le rapport
+## Le dashboard
 
-Chaque exécution écrit (ou réécrit) le fichier `rapports/veille_AAAA-MM-JJ.md` :
+À la fin de chaque exécution, `rapports/veille_AAAA-MM-JJ.html` s'ouvre dans ton navigateur. C'est un fichier autonome : tu peux le rouvrir plus tard (double-clic), le copier ou l'envoyer, sans serveur.
+
+- **À la une** : les 12 articles illustrés les plus récents, en cartes avec image.
+- **Fil d'actu** : tous les autres articles en liste compacte, avec le logo du site.
+- **Onglets** par thème, **recherche** plein texte et **filtre par source**.
+- Badge **Nouveau** sur les articles découverts dans les dernières 24 h.
+- Thème clair / sombre automatique selon ton système.
+
+Cliquer sur un article l'ouvre dans un nouvel onglet.
+
+## Le rapport Markdown
+
+Chaque exécution écrit aussi (ou réécrit) le fichier `rapports/veille_AAAA-MM-JJ.md` :
 
 ```markdown
 # Veille du 2026-10-25
@@ -234,7 +253,9 @@ ChopeTheNews/
 │   ├── config.py         # lecture et validation de config.yaml
 │   ├── collecte.py       # lecture des flux RSS et Google News
 │   ├── stockage.py       # base SQLite et dédoublonnage
-│   └── rapport.py        # génération du rapport Markdown
+│   ├── rapport.py        # génération du rapport Markdown
+│   ├── dashboard.py      # génération du dashboard HTML
+│   └── dashboard.html    # modèle du dashboard (styles + JavaScript)
 ├── data/                 # base SQLite (NON versionnée)
 └── rapports/             # rapports générés (NON versionnés)
 ```
@@ -246,6 +267,7 @@ Dépendances principales : [feedparser](https://feedparser.readthedocs.io/) (flu
 ## Limites connues
 
 - **Google News renvoie au maximum 100 résultats par recherche.** Pour une période longue ou un sujet très couvert, découpe-le en plusieurs recherches plus précises.
-- **Les liens Google News passent par une redirection** (`news.google.com/rss/articles/...`) : avec `extraire_contenu: true`, seul le texte des articles venant des flux RSS des sites est récupéré.
+- **Google News ne fournit pas d'images, et ses liens passent par une redirection** (`news.google.com/rss/articles/...`) qui affiche d'abord une page de consentement aux cookies en Europe. L'app ne peut donc pas aller sur la page de ces articles : ils n'ont ni image ni texte complet et apparaissent dans le fil d'actu. Les images viennent des flux RSS des sites et de Bing News.
+- **Bing News renvoie peu de résultats** (une trentaine par recherche) : il complète Google News, il ne le remplace pas.
 - **Seuls les sites avec un flux RSS/Atom sont pris en charge.** Un site sans flux peut quand même être suivi avec une recherche `site:` dans Google News.
 - Un article sans date de publication est toujours gardé, et daté du jour où il a été vu pour la première fois.

@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Literal
 
 import yaml
 from pydantic import BaseModel, Field
@@ -17,7 +18,10 @@ class GoogleNews(BaseModel):
 class Config(BaseModel):
     periode_jours: int = 7
     google_news: GoogleNews = Field(default_factory=GoogleNews)
+    moteurs: list[Literal["google_news", "bing_news"]] = ["google_news", "bing_news"]
     extraire_contenu: bool = False
+    recuperer_images: bool = True
+    ouvrir_navigateur: bool = True
     dossier_rapports: Path = Path("rapports")
     base_de_donnees: Path = Path("data/veille.db")
     themes: dict[str, Theme]

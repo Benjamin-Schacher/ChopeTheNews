@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ChopeTheNews</title>
+<style>
+  :root {
+    --bg: #f4f5f7; --surface: #ffffff; --surface-2: #eceef2; --text: #1b1d22; --muted: #6a6f7a;
+    --border: #dfe2e8; --accent: #2f6fed; --accent-text: #ffffff; --new: #1f9d55;
+    --shadow: 0 1px 2px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #111318; --surface: #1a1d24; --surface-2: #242833; --text: #e8eaef; --muted: #9298a6;
+      --border: #2c313c; --accent: #5b8cff; --accent-text: #0d1220; --new: #3ccf7f;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.3);
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  header {
+    position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(10px); border-bottom: 1px solid var(--border);
+  }
+  .bar { max-width: 1400px; margin: 0 auto; padding: 14px 20px; display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; }
+  h1 { font-size: 20px; margin: 0; letter-spacing: -.01em; }
+  .meta { color: var(--muted); font-size: 13px; }
+  .controles { margin-left: auto; display: flex; gap: 10px; flex-wrap: wrap; }
+  input, select {
+    font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 7px 10px; min-width: 0;
+  }
+  input { width: 240px; }
+  .onglets { max-width: 1400px; margin: 0 auto; padding: 0 20px 12px; display: flex; gap: 8px; overflow-x: auto; }
+  .onglet {
+    font: inherit; font-size: 14px; white-space: nowrap; cursor: pointer; border: 1px solid var(--border);
+    background: var(--surface); color: var(--text); border-radius: 999px; padding: 5px 14px;
+  }
+  .onglet[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+  .onglet .n { opacity: .7; margin-left: 4px; }
+  main { max-width: 1400px; margin: 0 auto; padding: 20px; }
+  .grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 18px; }
+  .carte {
+    display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); color: inherit; text-decoration: none;
+    transition: transform .12s ease, border-color .12s ease;
+  }
+  .carte:hover { transform: translateY(-2px); border-color: var(--accent); }
+  .visuel { aspect-ratio: 16 / 9; background: var(--surface-2); position: relative; overflow: hidden; }
+  .visuel img.photo { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .visuel .repli {
+    position: absolute; inset: 0; display: flex; flex-direction: column; gap: 8px;
+    align-items: center; justify-content: center; color: var(--muted); font-size: 13px;
+  }
+  .visuel .repli img { width: 40px; height: 40px; border-radius: 8px; }
+  .badge {
+    position: absolute; top: 10px; left: 10px; background: var(--new); color: #fff; font-size: 11px;
+    font-weight: 600; padding: 2px 8px; border-radius: 999px; text-transform: uppercase; letter-spacing: .04em;
+  }
+  .corps { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+  .source { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); }
+  .source img { width: 14px; height: 14px; border-radius: 3px; }
+  .source .theme { margin-left: auto; background: var(--surface-2); padding: 1px 8px; border-radius: 999px; }
+  .titre { font-size: 16px; font-weight: 600; line-height: 1.3; margin: 0; }
+  .resume {
+    margin: 0; color: var(--muted); font-size: 13.5px;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .vide { text-align: center; color: var(--muted); padding: 60px 0; }
+  .section-titre {
+    font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em;
+    color: var(--muted); margin: 8px 0 12px;
+  }
+  .section-titre .n { font-weight: 400; margin-left: 6px; }
+  section + section { margin-top: 32px; }
+  .fil {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    box-shadow: var(--shadow); overflow: hidden;
+  }
+  .ligne {
+    display: grid; grid-template-columns: 32px 1fr auto; gap: 4px 12px; align-items: center;
+    padding: 11px 16px; color: inherit; text-decoration: none; border-top: 1px solid var(--border);
+  }
+  .ligne:first-child { border-top: 0; }
+  .ligne:hover { background: var(--surface-2); }
+  .ligne .ico {
+    grid-row: span 2; width: 32px; height: 32px; border-radius: 8px; background: var(--surface-2);
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+  }
+  .ligne .ico img { width: 20px; height: 20px; }
+  .ligne .t { font-weight: 600; font-size: 14.5px; line-height: 1.3; }
+  .ligne .m { font-size: 12.5px; color: var(--muted); }
+  .ligne .tag { grid-row: span 2; font-size: 12px; color: var(--muted); background: var(--surface-2); padding: 1px 8px; border-radius: 999px; }
+  .ligne .nv { color: var(--new); font-weight: 600; margin-right: 6px; }
+  .plus {
+    display: block; width: 100%; font: inherit; font-size: 14px; color: var(--accent); background: none;
+    border: 0; border-top: 1px solid var(--border); padding: 12px; cursor: pointer;
+  }
+  .plus:hover { background: var(--surface-2); }
+  @media (max-width: 640px) {
+    .bar { padding: 12px 16px; }
+    .onglets, main { padding-left: 16px; padding-right: 16px; }
+    .controles { margin-left: 0; width: 100%; }
+    input { flex: 1; width: auto; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <div>
+      <h1>ChopeTheNews</h1>
+      <div class="meta" id="meta"></div>
+    </div>
+    <div class="controles">
+      <input id="recherche" type="search" placeholder="Rechercher…" aria-label="Rechercher">
+      <select id="source" aria-label="Source"><option value="">Toutes les sources</option></select>
+    </div>
+  </div>
+  <nav class="onglets" id="onglets"></nav>
+</header>
+<main>
+  <section id="sec-une">
+    <h2 class="section-titre">À la une<span class="n" id="n-une"></span></h2>
+    <div class="grille" id="grille"></div>
+  </section>
+  <section id="sec-fil">
+    <h2 class="section-titre">Fil d'actu<span class="n" id="n-fil"></span></h2>
+    <div class="fil" id="fil"></div>
+  </section>
+  <p class="vide" id="vide" hidden>Aucun article ne correspond.</p>
+</main>
+
+<script id="donnees" type="application/json">__DONNEES__</script>
+<script>
+  const D = JSON.parse(document.getElementById("donnees").textContent);
+  const articles = D.articles.sort((a, b) => b.date.localeCompare(a.date));
+  const etat = { theme: "", source: "", texte: "" };
+
+  const httpOk = (u) => typeof u === "string" && /^https?:\/\//i.test(u);
+  const favicon = (site) => site ? `https://www.google.com/s2/favicons?domain=${encodeURIComponent(site)}&sz=64` : null;
+
+  function elt(tag, attrs = {}, enfants = []) {
+    const e = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs)) {
+      if (k === "texte") e.textContent = v;
+      else if (v !== null && v !== undefined) e.setAttribute(k, v);
+    }
+    for (const c of enfants) if (c) e.append(c);
+    return e;
+  }
+
+  function dateRelative(iso) {
+    const d = new Date(iso), h = (Date.now() - d) / 36e5;
+    if (h < 1 / 12) return "à l'instant";
+    if (h < 1) return `il y a ${Math.floor(h * 60)} min`;
+    if (h < 24) return `il y a ${Math.floor(h)} h`;
+    if (h < 48) return "hier";
+    if (h < 24 * 7) return `il y a ${Math.floor(h / 24)} j`;
+    return d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+  }
+
+  function repli(a) {
+    const ico = favicon(a.site);
+    return elt("div", { class: "repli" }, [
+      ico && elt("img", { src: ico, alt: "", loading: "lazy" }),
+      elt("span", { texte: a.site || a.source || "" }),
+    ]);
+  }
+
+  function carte(a) {
+    const visuel = elt("div", { class: "visuel" });
+    if (httpOk(a.image)) {
+      const img = elt("img", { class: "photo", src: a.image, alt: "", loading: "lazy", referrerpolicy: "no-referrer" });
+      img.addEventListener("error", () => img.replaceWith(repli(a)));
+      visuel.append(img);
+    } else {
+      visuel.append(repli(a));
+    }
+    if (a.nouveau) visuel.append(elt("span", { class: "badge", texte: "Nouveau" }));
+
+    const ico = favicon(a.site);
+    const source = elt("div", { class: "source" }, [
+      ico && elt("img", { src: ico, alt: "", loading: "lazy" }),
+      elt("span", { texte: `${a.source || a.site || ""} · ${dateRelative(a.date)}` }),
+      etat.theme ? null : elt("span", { class: "theme", texte: a.theme }),
+    ]);
+    const corps = elt("div", { class: "corps" }, [
+      source,
+      elt("h2", { class: "titre", texte: a.titre }),
+      a.resume ? elt("p", { class: "resume", texte: a.resume }) : null,
+    ]);
+    return elt("a", {
+      class: "carte", href: httpOk(a.url) ? a.url : null, target: "_blank", rel: "noopener noreferrer",
+      title: new Date(a.date).toLocaleString("fr-FR"),
+    }, [visuel, corps]);
+  }
+
+  function ligne(a) {
+    const ico = favicon(a.site);
+    const meta = elt("div", { class: "m" }, [
+      a.nouveau ? elt("span", { class: "nv", texte: "Nouveau" }) : null,
+      `${a.source || a.site || ""} · ${dateRelative(a.date)}`,
+    ]);
+    return elt("a", {
+      class: "ligne", href: httpOk(a.url) ? a.url : null, target: "_blank", rel: "noopener noreferrer",
+      title: a.resume || new Date(a.date).toLocaleString("fr-FR"),
+    }, [
+      elt("span", { class: "ico" }, [ico && elt("img", { src: ico, alt: "", loading: "lazy" })]),
+      elt("span", { class: "t", texte: a.titre }),
+      etat.theme ? elt("span") : elt("span", { class: "tag", texte: a.theme }),
+      meta,
+    ]);
+  }
+
+  function filtres() {
+    const t = etat.texte.toLowerCase();
+    return articles.filter((a) =>
+      (!etat.theme || a.theme === etat.theme) &&
+      (!etat.source || a.source === etat.source) &&
+      (!t || `${a.titre} ${a.resume} ${a.source}`.toLowerCase().includes(t))
+    );
+  }
+
+  const MAX_UNE = 12, PAS_FIL = 60;
+  let limiteFil = PAS_FIL;
+
+  function afficher() {
+    const liste = filtres();
+    // À la une : les articles illustrés les plus récents ; le reste part dans le fil compact
+    const une = liste.filter((a) => httpOk(a.image)).slice(0, MAX_UNE);
+    const dansUne = new Set(une);
+    const fil = liste.filter((a) => !dansUne.has(a));
+
+    document.getElementById("sec-une").hidden = une.length === 0;
+    document.getElementById("n-une").textContent = une.length;
+    document.getElementById("grille").replaceChildren(...une.map(carte));
+
+    document.getElementById("sec-fil").hidden = fil.length === 0;
+    document.getElementById("n-fil").textContent = fil.length;
+    const lignes = fil.slice(0, limiteFil).map(ligne);
+    if (fil.length > limiteFil) {
+      const plus = elt("button", { class: "plus", type: "button", texte: `Afficher plus (${fil.length - limiteFil} restants)` });
+      plus.addEventListener("click", () => { limiteFil += PAS_FIL; afficher(); });
+      lignes.push(plus);
+    }
+    document.getElementById("fil").replaceChildren(...lignes);
+
+    document.getElementById("vide").hidden = liste.length > 0;
+    document.querySelectorAll(".onglet").forEach((b) => b.setAttribute("aria-pressed", b.dataset.theme === etat.theme));
+  }
+
+  function remplirSources() {
+    const sel = document.getElementById("source");
+    const base = articles.filter((a) => !etat.theme || a.theme === etat.theme);
+    const comptes = {};
+    for (const a of base) comptes[a.source] = (comptes[a.source] || 0) + 1;
+    const triees = Object.entries(comptes).sort((x, y) => y[1] - x[1]);
+    if (!comptes[etat.source]) etat.source = "";
+    sel.replaceChildren(elt("option", { value: "", texte: "Toutes les sources" }),
+      ...triees.map(([s, n]) => elt("option", { value: s, texte: `${s} (${n})` })));
+    sel.value = etat.source;
+  }
+
+  // Onglets de thèmes
+  const themes = {};
+  for (const a of articles) themes[a.theme] = (themes[a.theme] || 0) + 1;
+  const nav = document.getElementById("onglets");
+  for (const [nom, n] of [["", articles.length], ...Object.entries(themes)]) {
+    const b = elt("button", { class: "onglet", "data-theme": nom, type: "button" },
+      [nom || "Tout", elt("span", { class: "n", texte: n })]);
+    b.addEventListener("click", () => { etat.theme = nom; limiteFil = PAS_FIL; remplirSources(); afficher(); });
+    nav.append(b);
+  }
+
+  const nouveaux = articles.filter((a) => a.nouveau).length;
+  document.getElementById("meta").textContent =
+    `${articles.length} articles · ${D.periode_jours} derniers jours · ${nouveaux} nouveaux · généré le ${D.genere_le}`;
+  document.getElementById("recherche").addEventListener("input", (e) => { etat.texte = e.target.value; limiteFil = PAS_FIL; afficher(); });
+  document.getElementById("source").addEventListener("change", (e) => { etat.source = e.target.value; limiteFil = PAS_FIL; afficher(); });
+
+  remplirSources();
+  afficher();
+</script>
+</body>
+</html>

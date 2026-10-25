@@ -3,13 +3,25 @@
 # Nombre de jours en arrière à couvrir
 periode_jours: 7
 
-# Langue / pays pour Google News
+# Langue / pays des recherches (utilisé par Google News et Bing News)
 google_news:
   langue: fr
   pays: FR
 
+# Moteurs utilisés pour les recherches. Google News a plus de résultats,
+# Bing News fournit des images et les vrais liens des articles.
+moteurs:
+  - google_news
+  - bing_news
+
 # Récupérer le texte complet des articles (plus lent) — sinon on garde le résumé du flux
 extraire_contenu: false
+
+# Aller chercher l'image (og:image) sur la page des articles qui n'en ont pas dans le flux
+recuperer_images: true
+
+# Ouvrir le dashboard dans le navigateur à la fin de chaque exécution
+ouvrir_navigateur: true
 
 # Dossiers de sortie
 dossier_rapports: rapports
