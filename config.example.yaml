@@ -22,11 +22,11 @@ themes:
       - https://www.numerama.com/feed/
       - https://www.lemonde.fr/pixels/rss_full.xml
     recherches:
-      - intelligence artificielle
+      - '"intelligence artificielle"'
       - cybersécurité
 
   energie:
     sites:
       - https://www.connaissancedesenergies.org/rss.xml
     recherches:
-      - hydrogène vert
+      - '"hydrogène vert"'
