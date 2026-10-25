@@ -23,6 +23,13 @@ recuperer_images: true
 # Ouvrir le dashboard dans le navigateur à la fin de chaque exécution
 ouvrir_navigateur: true
 
+# Tendances X (ex-Twitter) affichées dans la barre latérale du dashboard, via trends24.in.
+# "monde", "france", ou le nom d'un pays tel qu'il apparaît dans l'URL trends24 (belgium, canada, united-states...).
+# Mettre [] pour désactiver.
+tendances_x:
+  - monde
+  - france
+
 # Dossiers de sortie
 dossier_rapports: rapports
 base_de_donnees: data/veille.db

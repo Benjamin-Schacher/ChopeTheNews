@@ -6,7 +6,9 @@ from pathlib import Path
 TEMPLATE = (Path(__file__).parent / "dashboard.html").read_text(encoding="utf-8")
 
 
-def generer(articles: list[sqlite3.Row], dossier: Path, periode_jours: int, themes: list[str]) -> Path:
+def generer(
+    articles: list[sqlite3.Row], dossier: Path, periode_jours: int, themes: list[str], tendances_x: list[dict]
+) -> Path:
     dossier.mkdir(parents=True, exist_ok=True)
     aujourdhui = datetime.now().strftime("%Y-%m-%d")
     chemin = dossier / f"veille_{aujourdhui}.html"
@@ -17,6 +19,7 @@ def generer(articles: list[sqlite3.Row], dossier: Path, periode_jours: int, them
         "genere_le": datetime.now().strftime("%d/%m/%Y à %H:%M"),
         "periode_jours": periode_jours,
         "themes": themes,
+        "tendances_x": tendances_x,
         "articles": [
             {
                 "theme": a["theme"],

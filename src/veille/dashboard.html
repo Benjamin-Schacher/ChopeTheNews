@@ -101,6 +101,40 @@
     border: 0; border-top: 1px solid var(--border); padding: 12px; cursor: pointer;
   }
   .plus:hover { background: var(--surface-2); }
+  .mise-en-page { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 24px; align-items: start; }
+  .mise-en-page.sans-aside { grid-template-columns: minmax(0, 1fr); }
+  aside {
+    position: sticky; top: calc(var(--h-header, 120px) + 16px); background: var(--surface);
+    border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow);
+    max-height: calc(100vh - var(--h-header, 120px) - 32px); display: flex; flex-direction: column; overflow: hidden;
+  }
+  aside[hidden] { display: none; }
+  .aside-tete { padding: 14px 16px 10px; border-bottom: 1px solid var(--border); }
+  .aside-tete h2 { font-size: 15px; margin: 0 0 10px; display: flex; align-items: center; gap: 8px; }
+  .aside-tete h2 svg { width: 15px; height: 15px; fill: currentColor; }
+  .segments { display: flex; background: var(--surface-2); border-radius: 8px; padding: 3px; gap: 3px; }
+  .segment {
+    flex: 1; font: inherit; font-size: 13px; border: 0; border-radius: 6px; padding: 5px 8px;
+    background: none; color: var(--muted); cursor: pointer;
+  }
+  .segment[aria-pressed="true"] { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+  .aside-maj { font-size: 12px; color: var(--muted); margin-top: 8px; }
+  .tendances { list-style: none; margin: 0; padding: 4px 0; overflow-y: auto; counter-reset: rang; }
+  .tendances li { counter-increment: rang; }
+  .tendances a {
+    display: grid; grid-template-columns: 26px 1fr; align-items: baseline; padding: 7px 16px 7px 10px;
+    color: inherit; text-decoration: none; font-size: 14px;
+  }
+  .tendances a::before { content: counter(rang); color: var(--muted); font-size: 12px; text-align: right; padding-right: 10px; }
+  .tendances a:hover { background: var(--surface-2); }
+  .tendances .nom { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tendances .posts { grid-column: 2; font-size: 12px; color: var(--muted); }
+  .aside-pied { border-top: 1px solid var(--border); padding: 10px 16px; font-size: 12px; color: var(--muted); }
+  .aside-pied a { color: var(--accent); text-decoration: none; }
+  @media (max-width: 1000px) {
+    .mise-en-page { grid-template-columns: minmax(0, 1fr); }
+    aside { position: static; order: -1; max-height: 340px; }
+  }
   @media (max-width: 640px) {
     .bar { padding: 12px 16px; }
     .onglets, main { padding-left: 16px; padding-right: 16px; }
@@ -123,7 +157,8 @@
   </div>
   <nav class="onglets" id="onglets"></nav>
 </header>
-<main>
+<main class="mise-en-page" id="mise-en-page">
+  <div>
   <section id="sec-une">
     <h2 class="section-titre">À la une<span class="n" id="n-une"></span></h2>
     <div class="grille" id="grille"></div>
@@ -133,6 +168,19 @@
     <div class="fil" id="fil"></div>
   </section>
   <p class="vide" id="vide" hidden>Aucun article ne correspond.</p>
+  </div>
+  <aside id="aside" hidden>
+    <div class="aside-tete">
+      <h2>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        Tendances
+      </h2>
+      <div class="segments" id="segments"></div>
+      <div class="aside-maj" id="aside-maj"></div>
+    </div>
+    <ol class="tendances" id="tendances"></ol>
+    <div class="aside-pied">Source : <a id="aside-source" target="_blank" rel="noopener noreferrer">trends24.in</a></div>
+  </aside>
 </main>
 
 <script id="donnees" type="application/json">__DONNEES__</script>
@@ -285,6 +333,41 @@
     `${articles.length} articles · ${D.periode_jours} derniers jours · ${nouveaux} nouveaux · généré le ${D.genere_le}`;
   document.getElementById("recherche").addEventListener("input", (e) => { etat.texte = e.target.value; limiteFil = PAS_FIL; afficher(); });
   document.getElementById("source").addEventListener("change", (e) => { etat.source = e.target.value; limiteFil = PAS_FIL; afficher(); });
+
+  // Barre latérale : tendances X par lieu
+  const lieux = (D.tendances_x || []).filter((l) => l.tendances.length);
+  let lieuActif = 0;
+
+  function afficherTendances() {
+    const l = lieux[lieuActif];
+    document.querySelectorAll(".segment").forEach((b, i) => b.setAttribute("aria-pressed", i === lieuActif));
+    document.getElementById("aside-maj").textContent = `Mis à jour ${dateRelative(l.maj)}`;
+    document.getElementById("aside-source").href = l.page;
+    document.getElementById("tendances").replaceChildren(...l.tendances.map((t) => elt("li", {}, [
+      elt("a", { href: httpOk(t.url) ? t.url : null, target: "_blank", rel: "noopener noreferrer", title: `Voir « ${t.nom} » sur X` }, [
+        elt("span", { class: "nom", texte: t.nom }),
+        t.posts ? elt("span", { class: "posts", texte: `${t.posts.toLocaleString("fr-FR")} posts` }) : null,
+      ]),
+    ])));
+  }
+
+  if (lieux.length) {
+    document.getElementById("aside").hidden = false;
+    const segments = document.getElementById("segments");
+    lieux.forEach((l, i) => {
+      const b = elt("button", { class: "segment", type: "button", texte: l.lieu });
+      b.addEventListener("click", () => { lieuActif = i; afficherTendances(); });
+      segments.append(b);
+    });
+    afficherTendances();
+  } else {
+    document.getElementById("mise-en-page").classList.add("sans-aside");
+  }
+
+  // La barre latérale se cale sous l'en-tête collant, dont la hauteur varie avec la largeur
+  const ajusterHeader = () => document.documentElement.style.setProperty("--h-header", `${document.querySelector("header").offsetHeight}px`);
+  window.addEventListener("resize", ajusterHeader);
+  ajusterHeader();
 
   remplirSources();
   afficher();

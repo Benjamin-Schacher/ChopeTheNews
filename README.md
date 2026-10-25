@@ -133,6 +133,7 @@ themes:
 | `extraire_contenu` | non | `false` | Récupère le texte complet des articles |
 | `recuperer_images` | non | `true` | Cherche l'image `og:image` des articles qui n'en ont pas dans le flux |
 | `ouvrir_navigateur` | non | `true` | Ouvre le dashboard à la fin de l'exécution |
+| `tendances_x` | non | `[monde, france]` | Tendances X affichées dans la barre latérale (`[]` pour désactiver) |
 | `dossier_rapports` | non | `rapports` | Dossier de sortie des rapports |
 | `base_de_donnees` | non | `data/veille.db` | Fichier de la base SQLite |
 | `themes` | **oui** | | Dictionnaire `nom_du_theme: { sites, recherches }` |
@@ -182,6 +183,7 @@ Rapport : rapports/veille_2026-10-25.md
 - **À la une** : les 12 articles illustrés les plus récents, en cartes avec image.
 - **Fil d'actu** : tous les autres articles en liste compacte, avec le logo du site.
 - **Onglets** par thème, **recherche** plein texte et **filtre par source**.
+- **Tendances X** (Monde / France) dans une barre latérale : les 30 sujets du moment, chacun avec un lien vers la recherche X correspondante. Elles viennent de [trends24.in](https://trends24.in/), car X n'a plus d'API gratuite pour ça. D'autres pays sont possibles avec l'option `tendances_x` : utilise le nom du pays tel qu'il apparaît dans l'URL trends24, par exemple `belgium` pour `trends24.in/belgium/`.
 - Badge **Nouveau** sur les articles découverts dans les dernières 24 h.
 - Thème clair / sombre automatique selon ton système.
 
@@ -254,6 +256,7 @@ ChopeTheNews/
 │   ├── collecte.py       # lecture des flux RSS et Google News
 │   ├── stockage.py       # base SQLite et dédoublonnage
 │   ├── rapport.py        # génération du rapport Markdown
+│   ├── tendances.py      # tendances X (trends24.in)
 │   ├── dashboard.py      # génération du dashboard HTML
 │   └── dashboard.html    # modèle du dashboard (styles + JavaScript)
 ├── data/                 # base SQLite (NON versionnée)
@@ -270,4 +273,5 @@ Dépendances principales : [feedparser](https://feedparser.readthedocs.io/) (flu
 - **Google News ne fournit pas d'images, et ses liens passent par une redirection** (`news.google.com/rss/articles/...`) qui affiche d'abord une page de consentement aux cookies en Europe. L'app ne peut donc pas aller sur la page de ces articles : ils n'ont ni image ni texte complet et apparaissent dans le fil d'actu. Les images viennent des flux RSS des sites et de Bing News.
 - **Bing News renvoie peu de résultats** (une trentaine par recherche) : il complète Google News, il ne le remplace pas. Comme il mélange parfois l'actu générale du moment à ses résultats, un article Bing n'est gardé que si son titre ou son résumé contient un des termes de la recherche (et aucun terme exclu avec `-`).
 - **Seuls les sites avec un flux RSS/Atom sont pris en charge.** Un site sans flux peut quand même être suivi avec une recherche `site:` dans Google News.
+- **Les tendances X sont une photo prise au moment de l'exécution** : elles ne se mettent pas à jour toutes seules dans le dashboard. `--sans-collecte` réaffiche les dernières tendances récupérées. Si trends24.in change la structure de ses pages, la barre latérale disparaît simplement, sans bloquer le reste.
 - Un article sans date de publication est toujours gardé, et daté du jour où il a été vu pour la première fois.

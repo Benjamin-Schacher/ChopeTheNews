@@ -3,7 +3,7 @@ import webbrowser
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from veille import collecte, dashboard, rapport, stockage
+from veille import collecte, dashboard, rapport, stockage, tendances
 from veille.config import charger_config
 
 
@@ -20,16 +20,23 @@ def main() -> None:
         config.periode_jours = args.jours
 
     db = stockage.ouvrir(config.base_de_donnees)
-    if not args.sans_collecte:
+    chemin_tendances = config.base_de_donnees.parent / "tendances_x.json"
+    if args.sans_collecte:
+        tendances_x = tendances.charger(chemin_tendances)
+    else:
         print(f"Collecte sur {config.periode_jours} jour(s)...")
         articles = collecte.collecter(config)
         nouveaux = stockage.enregistrer(db, articles)
         print(f"{len(articles)} article(s) trouvé(s), dont {nouveaux} nouveau(x).")
+        tendances_x = tendances.collecter(config.tendances_x)
+        tendances.sauver(tendances_x, chemin_tendances)
 
     depuis = datetime.now(timezone.utc) - timedelta(days=config.periode_jours)
     selection = stockage.articles_depuis(db, depuis)
     chemin_md = rapport.generer(selection, config.dossier_rapports, config.periode_jours)
-    chemin_html = dashboard.generer(selection, config.dossier_rapports, config.periode_jours, list(config.themes))
+    chemin_html = dashboard.generer(
+        selection, config.dossier_rapports, config.periode_jours, list(config.themes), tendances_x
+    )
     print(f"Rapport : {chemin_md}")
     print(f"Dashboard : {chemin_html}")
 

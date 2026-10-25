@@ -22,6 +22,7 @@ class Config(BaseModel):
     extraire_contenu: bool = False
     recuperer_images: bool = True
     ouvrir_navigateur: bool = True
+    tendances_x: list[str] = ["monde", "france"]
     dossier_rapports: Path = Path("rapports")
     base_de_donnees: Path = Path("data/veille.db")
     themes: dict[str, Theme]
