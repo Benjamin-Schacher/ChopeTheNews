@@ -268,6 +268,6 @@ Dépendances principales : [feedparser](https://feedparser.readthedocs.io/) (flu
 
 - **Google News renvoie au maximum 100 résultats par recherche.** Pour une période longue ou un sujet très couvert, découpe-le en plusieurs recherches plus précises.
 - **Google News ne fournit pas d'images, et ses liens passent par une redirection** (`news.google.com/rss/articles/...`) qui affiche d'abord une page de consentement aux cookies en Europe. L'app ne peut donc pas aller sur la page de ces articles : ils n'ont ni image ni texte complet et apparaissent dans le fil d'actu. Les images viennent des flux RSS des sites et de Bing News.
-- **Bing News renvoie peu de résultats** (une trentaine par recherche) : il complète Google News, il ne le remplace pas.
+- **Bing News renvoie peu de résultats** (une trentaine par recherche) : il complète Google News, il ne le remplace pas. Comme il mélange parfois l'actu générale du moment à ses résultats, un article Bing n'est gardé que si son titre ou son résumé contient un des termes de la recherche (et aucun terme exclu avec `-`).
 - **Seuls les sites avec un flux RSS/Atom sont pris en charge.** Un site sans flux peut quand même être suivi avec une recherche `site:` dans Google News.
 - Un article sans date de publication est toujours gardé, et daté du jour où il a été vu pour la première fois.

@@ -29,7 +29,7 @@ def main() -> None:
     depuis = datetime.now(timezone.utc) - timedelta(days=config.periode_jours)
     selection = stockage.articles_depuis(db, depuis)
     chemin_md = rapport.generer(selection, config.dossier_rapports, config.periode_jours)
-    chemin_html = dashboard.generer(selection, config.dossier_rapports, config.periode_jours)
+    chemin_html = dashboard.generer(selection, config.dossier_rapports, config.periode_jours, list(config.themes))
     print(f"Rapport : {chemin_md}")
     print(f"Dashboard : {chemin_html}")
 

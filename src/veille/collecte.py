@@ -1,5 +1,6 @@
 import calendar
 import re
+import unicodedata
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
@@ -82,12 +83,38 @@ def _image_entree(entree) -> str | None:
     return None
 
 
+def _sans_accents(texte: str) -> str:
+    return "".join(c for c in unicodedata.normalize("NFKD", texte.lower()) if not unicodedata.combining(c))
+
+
+def _termes(requete: str) -> tuple[list[str], list[str]]:
+    """Découpe une requête en termes recherchés et termes exclus (-mot), sans les opérateurs."""
+    inclus, exclus = [], []
+    for signe, phrase, mot in re.findall(r'(-?)(?:"([^"]+)"|(\S+))', requete):
+        terme = phrase or mot
+        if not phrase and (terme == "OR" or terme.startswith("site:")):
+            continue
+        terme = _sans_accents(terme.removeprefix("intitle:"))
+        (exclus if signe else inclus).append(terme)
+    return inclus, exclus
+
+
+def _pertinent(article: "Article", requete: str) -> bool:
+    """Bing renvoie parfois l'actu générale du moment : on vérifie que l'article parle bien de la requête."""
+    texte = _sans_accents(f"{article.titre} {article.resume}")
+    contient = lambda t: re.search(rf"\b{re.escape(t)}\b", texte) is not None
+    inclus, exclus = _termes(requete)
+    return any(map(contient, inclus)) and not any(map(contient, exclus))
+
+
 def _nettoyer(html: str) -> str:
     texte = trafilatura.extract(f"<html><body><p>{html}</p></body></html>") if html else None
     return (texte or "").strip()
 
 
-def lire_flux(client: httpx.Client, url: str, theme: str, source: str, depuis: datetime) -> list[Article]:
+def lire_flux(
+    client: httpx.Client, url: str, theme: str, source: str, depuis: datetime, requete: str | None = None
+) -> list[Article]:
     try:
         reponse = client.get(url)
         reponse.raise_for_status()
@@ -110,18 +137,18 @@ def lire_flux(client: httpx.Client, url: str, theme: str, source: str, depuis: d
         if resume.startswith(titre):
             resume = ""
         lien = _lien_bing(entree.get("link", ""))
-        articles.append(
-            Article(
-                theme=theme,
-                source=source_entree,
-                titre=titre,
-                url=lien,
-                date=date,
-                resume=resume,
-                image=_image_entree(entree),
-                site=_domaine(entree.get("source", {}).get("href") or lien),
-            )
+        article = Article(
+            theme=theme,
+            source=source_entree,
+            titre=titre,
+            url=lien,
+            date=date,
+            resume=resume,
+            image=_image_entree(entree),
+            site=_domaine(entree.get("source", {}).get("href") or lien),
         )
+        if requete is None or _pertinent(article, requete):
+            articles.append(article)
     print(f"  {source if source != url else nom_source} : {len(articles)} article(s)")
     return articles
 
@@ -147,20 +174,20 @@ def collecter(config: Config) -> list[Article]:
     taches = []
     for nom, theme in config.themes.items():
         for site in theme.sites:
-            taches.append((site, nom, site))
+            taches.append((site, nom, site, None))
         for requete in theme.recherches:
             if "google_news" in config.moteurs:
                 url = url_google_news(requete, config.periode_jours, gn.langue, gn.pays)
-                taches.append((url, nom, f"Google News « {requete} »"))
+                taches.append((url, nom, f"Google News « {requete} »", None))
             if "bing_news" in config.moteurs:
-                # Bing renvoie ~12 résultats par page : on en lit plusieurs
+                # Bing renvoie ~12 résultats par page : on en lit plusieurs, filtrés par pertinence
                 for page in range(PAGES_BING):
                     url = url_bing_news(requete, gn.langue, gn.pays, 1 + page * 12)
-                    taches.append((url, nom, f"Bing News « {requete} » p.{page + 1}"))
+                    taches.append((url, nom, f"Bing News « {requete} » p.{page + 1}", requete))
 
     with httpx.Client(headers={"User-Agent": USER_AGENT}, timeout=20, follow_redirects=True) as client:
         with ThreadPoolExecutor(max_workers=8) as pool:
-            resultats = pool.map(lambda t: lire_flux(client, t[0], t[1], t[2], depuis), taches)
+            resultats = pool.map(lambda t: lire_flux(client, t[0], t[1], t[2], depuis, t[3]), taches)
             articles = [a for lot in resultats for a in lot]
 
         # Les liens Google News sont des redirections JavaScript : inutile d'aller chercher la page

@@ -267,8 +267,11 @@
   }
 
   // Onglets de thèmes
+  // Ordre des onglets = ordre des thèmes dans config.yaml
   const themes = {};
+  for (const t of D.themes) themes[t] = 0;
   for (const a of articles) themes[a.theme] = (themes[a.theme] || 0) + 1;
+  for (const t of Object.keys(themes)) if (!themes[t]) delete themes[t];
   const nav = document.getElementById("onglets");
   for (const [nom, n] of [["", articles.length], ...Object.entries(themes)]) {
     const b = elt("button", { class: "onglet", "data-theme": nom, type: "button" },

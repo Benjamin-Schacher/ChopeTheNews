@@ -27,18 +27,85 @@ ouvrir_navigateur: true
 dossier_rapports: rapports
 base_de_donnees: data/veille.db
 
-# Un thème = une liste de flux RSS + une liste de recherches Google News
+# Un thème = une liste de flux RSS + une liste de recherches (Google News / Bing News).
+# Syntaxe des recherches : "expression exacte", OR, -exclure, intitle:mot, site:domaine.fr
 themes:
-  tech:
-    sites:
-      - https://www.numerama.com/feed/
-      - https://www.lemonde.fr/pixels/rss_full.xml
-    recherches:
-      - '"intelligence artificielle"'
-      - cybersécurité
 
-  energie:
+  Dev:
     sites:
-      - https://www.connaissancedesenergies.org/rss.xml
+      # FR
+      - https://www.developpez.com/index/rss                                        # Developpez.com
+      - https://www.journalduhacker.net/rss                                         # Journal du hacker (agrégateur communautaire)
+      - https://www.lemondeinformatique.fr/flux-rss/thematique/developpement/rss.xml # Le Monde Informatique - Développement
+      # EN
+      - https://hnrss.org/frontpage?points=150                                      # Hacker News (articles > 150 points)
+      - https://github.blog/feed/                                                   # GitHub Blog
+      - https://feed.infoq.com/                                                     # InfoQ (architecture, langages)
+      - https://thenewstack.io/feed/                                                # The New Stack (cloud, DevOps)
+      - https://stackoverflow.blog/feed/                                            # Stack Overflow Blog
     recherches:
-      - '"hydrogène vert"'
+      - '"vibe coding" OR "agent de code" OR "assistant de codage" OR "GitHub Copilot" OR "Claude Code" OR Codex'
+      - 'intitle:Python OR intitle:Rust OR intitle:TypeScript OR intitle:JavaScript OR intitle:Kotlin OR intitle:Golang'
+      - '"langage de programmation" OR "développeurs web" OR "développement logiciel"'
+      - '"open source" OR GitHub OR GitLab -Télécharger -"bon plan"'
+
+  Cybersécurité:
+    sites:
+      # FR
+      - https://www.zataz.com/feed/                                                 # ZATAZ
+      - https://www.lemondeinformatique.fr/flux-rss/thematique/securite/rss.xml     # Le Monde Informatique - Sécurité
+      - https://www.undernews.fr/feed                                               # UnderNews
+      - https://www.it-connect.fr/feed/                                             # IT-Connect (sécu / admin sys)
+      - https://www.cert.ssi.gouv.fr/alerte/feed/                                   # CERT-FR - alertes critiques (ANSSI)
+      - https://www.cybermalveillance.gouv.fr/feed/atom-flux-actualites             # Cybermalveillance.gouv.fr
+      # EN
+      - https://www.bleepingcomputer.com/feed/                                      # BleepingComputer
+      - https://feeds.feedburner.com/TheHackersNews                                 # The Hacker News
+      - https://krebsonsecurity.com/feed/                                           # Krebs on Security
+      - https://www.darkreading.com/rss.xml                                         # Dark Reading
+      - https://www.securityweek.com/feed/                                          # SecurityWeek
+    recherches:
+      - 'cyberattaque OR rançongiciel OR ransomware'
+      - '"fuite de données" OR piratage OR hackers'
+      - '"faille de sécurité" OR vulnérabilité OR "zero-day"'
+      - 'ANSSI OR cybersécurité -"top 10"'
+
+  Tech:
+    sites:
+      # FR
+      - https://www.numerama.com/feed/                                              # Numerama
+      - https://next.ink/feed/                                                      # Next
+      - https://www.lemonde.fr/pixels/rss_full.xml                                  # Le Monde - Pixels
+      - https://www.01net.com/feed/                                                 # 01net
+      - https://www.frandroid.com/feed                                              # Frandroid
+      - https://www.lesnumeriques.com/rss.xml                                       # Les Numériques
+      - https://www.journaldugeek.com/feed/                                         # Journal du Geek
+      - https://www.presse-citron.net/feed/                                         # Presse-citron
+      - https://korben.info/feed                                                    # Korben
+      - https://www.tomshardware.fr/feed/                                           # Tom's Hardware FR
+      # EN
+      - https://www.theverge.com/rss/index.xml                                      # The Verge
+      - https://feeds.arstechnica.com/arstechnica/index                             # Ars Technica
+      - https://techcrunch.com/feed/                                                # TechCrunch
+    recherches:
+      - 'intitle:IA OR "intelligence artificielle" -"bon plan" -site:openai.com'
+      - 'OpenAI OR Anthropic OR "Mistral AI" OR Gemini -site:openai.com'
+      - 'Apple OR Samsung OR Google OR Microsoft annonce -"bon plan" -promo -prix'
+
+  Jeux vidéo:
+    sites:
+      # FR
+      - https://www.gamekult.com/feed.xml                                           # Gamekult
+      - https://www.jeuxvideo.com/rss/rss-news.xml                                  # JeuxVideo.com - news
+      - https://www.gameblog.fr/rss.php                                             # Gameblog
+      - https://www.actugaming.net/feed/                                            # ActuGaming
+      - https://www.gamergen.com/rss                                                # GamerGen
+      # EN
+      - https://feeds.feedburner.com/ign/all                                        # IGN
+      - https://www.eurogamer.net/feed                                              # Eurogamer
+      - https://www.pcgamer.com/rss/                                                # PC Gamer
+      - https://www.gamesindustry.biz/feed                                          # GamesIndustry.biz (business du JV)
+    recherches:
+      - '"jeu vidéo" OR "jeux vidéo"'
+      - 'PlayStation OR Xbox OR "Nintendo Switch 2" OR Steam -"bon plan" -promo'
+      - '"jeu de rôle" OR RPG -offre -promo -"bon plan" -prix'
