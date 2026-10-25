@@ -1,0 +1,32 @@
+# Copie ce fichier en config.yaml et adapte-le (config.yaml n'est pas versionné).
+
+# Nombre de jours en arrière à couvrir
+periode_jours: 7
+
+# Langue / pays pour Google News
+google_news:
+  langue: fr
+  pays: FR
+
+# Récupérer le texte complet des articles (plus lent) — sinon on garde le résumé du flux
+extraire_contenu: false
+
+# Dossiers de sortie
+dossier_rapports: rapports
+base_de_donnees: data/veille.db
+
+# Un thème = une liste de flux RSS + une liste de recherches Google News
+themes:
+  tech:
+    sites:
+      - https://www.numerama.com/feed/
+      - https://www.lemonde.fr/pixels/rss_full.xml
+    recherches:
+      - intelligence artificielle
+      - cybersécurité
+
+  energie:
+    sites:
+      - https://www.connaissancedesenergies.org/rss.xml
+    recherches:
+      - hydrogène vert

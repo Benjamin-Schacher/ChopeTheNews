@@ -1,0 +1,12 @@
+# Config perso et secrets
+config.yaml
+.env
+
+# Données générées
+data/
+rapports/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
